@@ -135,7 +135,7 @@ fun loadRecents(context: Context): List<String> =
     .getString(KEY_RECENTS, null)?.split(",")?.filter { it.isNotBlank() } ?: emptyList()
 
 fun pushRecent(context: Context, packageName: String) {
-  val updated = ([packageName] + loadRecents(context).filter { it != packageName }).take(5)
+  val updated = (listOf(packageName) + loadRecents(context).filter { it != packageName }).take(5)
   context.getSharedPreferences(WISP_PREFS, Context.MODE_PRIVATE).edit()
     .putString(KEY_RECENTS, updated.joinToString(",")).apply()
 }
@@ -275,7 +275,7 @@ fun WatchOS() {
               when (key) {
                 "battery" -> fireSettings(context, Intent.ACTION_POWER_USAGE_SUMMARY)
                 "apps" -> scope.launch { pagerState.animateScrollToPage(2) }
-                else -> fireSettings(context, android.provider.Settings.ACTION_SHOW_ALARMS)
+                else -> fireSettings(context, android.provider.AlarmClock.ACTION_SHOW_ALARMS)
               }
             }
           )
