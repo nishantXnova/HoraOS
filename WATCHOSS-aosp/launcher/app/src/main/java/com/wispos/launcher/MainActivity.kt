@@ -11,6 +11,7 @@ import android.provider.Settings
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.shape.CircleShape
@@ -25,6 +26,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
@@ -115,38 +118,76 @@ fun WatchOS() {
 
 // Rounded heavy sans (Nunito ExtraBold, SIL OFL, bundled) — closest legal
 // stand-in for a compact rounded watch typeface. Tabular numerals kill jitter.
-val WispFace = FontFamily(Font(R.font.nunito_extrabold, FontWeight.ExtraBold))
+val WispFace = FontFamily(
+  Font(R.font.nunito_light, FontWeight.Light),
+  Font(R.font.nunito_extrabold, FontWeight.ExtraBold)
+)
 
 @Composable
 fun WatchFacePage(now: LocalDateTime, context: Context, appCount: Int?) {
   val time = now.format(DateTimeFormatter.ofPattern("HH:mm"))
-  val date = now.format(DateTimeFormatter.ofPattern("EEE, MMM d"))
+  val date = now.format(DateTimeFormatter.ofPattern("EEE, MMM d")).uppercase()
   val batt = remember { batteryPct(context) }
+  val apps = (appCount ?: 0).coerceAtLeast(0)
   Box(
     Modifier.fillMaxSize().background(Color.Black).padding(20.dp),
     contentAlignment = Alignment.Center
   ) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
       Text(
+        text = date,
+        fontSize = 11.sp,
+        fontWeight = FontWeight.Medium,
+        color = Color(0xFF8E8E93),
+        letterSpacing = 2.sp
+      )
+      Spacer(Modifier.height(2.dp))
+      Text(
         text = time,
         fontFamily = WispFace,
-        fontSize = 64.sp,
+        fontWeight = FontWeight.Light,
+        fontSize = 72.sp,
         color = Color.White,
         style = TextStyle(fontFeatureSettings = "tnum"),
         letterSpacing = (-2).sp
       )
-      Spacer(Modifier.height(2.dp))
-      Text(date, fontSize = 14.sp, color = Color(0xFF8E8E93))
+      Spacer(Modifier.height(12.dp))
+      // Icon-only complication row — values live inside the rings, no labels.
+      Row(
+        horizontalArrangement = Arrangement.spacedBy(14.dp),
+        verticalAlignment = Alignment.CenterVertically
+      ) {
+        MiniRing(
+          progress = if (batt >= 0) batt / 100f else 0f,
+          value = if (batt >= 0) "$batt" else "–"
+        )
+        MiniRing(
+          progress = (apps / 20f).coerceIn(0f, 1f),
+          value = "$apps"
+        )
+        MiniRing(
+          progress = now.dayOfMonth / 31f,
+          value = "${now.dayOfMonth}"
+        )
+      }
     }
-    // Single corner complication — battery. Nothing else competes with time.
-    if (batt >= 0) {
-      Text(
-        "$batt%",
-        fontSize = 12.sp,
-        color = Color(0xFF8E8E93),
-        modifier = Modifier.align(Alignment.TopEnd).padding(top = 6.dp, end = 4.dp)
+  }
+}
+
+@Composable
+fun MiniRing(progress: Float, value: String) {
+  Box(Modifier.size(42.dp), contentAlignment = Alignment.Center) {
+    Canvas(Modifier.fillMaxSize()) {
+      drawArc(
+        Color.White.copy(alpha = 0.12f), 0f, 360f, false,
+        style = Stroke(width = 3.dp.toPx())
+      )
+      drawArc(
+        Color.White, -90f, progress.coerceIn(0f, 1f) * 360f, false,
+        style = Stroke(width = 3.dp.toPx(), cap = StrokeCap.Round)
       )
     }
+    Text(value, fontSize = 11.sp, fontWeight = FontWeight.Medium, color = Color.White)
   }
 }
 
