@@ -12,7 +12,6 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.background
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
@@ -21,9 +20,14 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -104,42 +108,44 @@ fun WatchOS() {
           2 -> AppDrawerPage(apps)
         }
       }
-      // Page dots
-      Row(
-        Modifier.align(Alignment.BottomCenter).padding(bottom = 10.dp),
-        horizontalArrangement = Arrangement.spacedBy(4.dp)
-      ) {
-        repeat(3) { i ->
-          Box(
-            Modifier.size(if (i == pagerState.currentPage) 6.dp else 4.dp)
-              .background(
-                if (i == pagerState.currentPage) MaterialTheme.colors.primary
-                else MaterialTheme.colors.onBackground.copy(alpha = 0.35f),
-                CircleShape
-              )
-          )
-        }
-      }
     }
   }
 }
+
+// Rounded heavy sans (Nunito ExtraBold, SIL OFL, bundled) — closest legal
+// stand-in for a compact rounded watch typeface. Tabular numerals kill jitter.
+val HoraFace = FontFamily(Font(R.font.nunito_extrabold, FontWeight.ExtraBold))
 
 @Composable
 fun WatchFacePage(now: LocalDateTime, context: Context, appCount: Int?) {
   val time = now.format(DateTimeFormatter.ofPattern("HH:mm"))
   val date = now.format(DateTimeFormatter.ofPattern("EEE, MMM d"))
   val batt = remember { batteryPct(context) }
-  Column(
-    Modifier.fillMaxSize().padding(16.dp),
-    horizontalAlignment = Alignment.CenterHorizontally,
-    verticalArrangement = Arrangement.Center
+  Box(
+    Modifier.fillMaxSize().background(Color.Black).padding(20.dp),
+    contentAlignment = Alignment.Center
   ) {
-    Text(time, fontSize = 52.sp, fontWeight = FontWeight.Bold)
-    Text(date, fontSize = 14.sp)
-    Spacer(Modifier.height(8.dp))
-    Text(statusLine(batt, appCount), fontSize = 12.sp)
-    Spacer(Modifier.height(4.dp))
-    Text("‹ settings   •   apps ›", fontSize = 10.sp)
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+      Text(
+        text = time,
+        fontFamily = HoraFace,
+        fontSize = 64.sp,
+        color = Color.White,
+        style = TextStyle(fontFeatureSettings = "tnum"),
+        letterSpacing = (-2).sp
+      )
+      Spacer(Modifier.height(2.dp))
+      Text(date, fontSize = 14.sp, color = Color(0xFF8E8E93))
+    }
+    // Single corner complication — battery. Nothing else competes with time.
+    if (batt >= 0) {
+      Text(
+        "$batt%",
+        fontSize = 12.sp,
+        color = Color(0xFF8E8E93),
+        modifier = Modifier.align(Alignment.TopEnd).padding(top = 6.dp, end = 4.dp)
+      )
+    }
   }
 }
 
@@ -211,7 +217,14 @@ fun AppDrawerPage(apps: List<AppEntry>?) {
           }
         },
         label = { Text(app.label, maxLines = 1) },
-        icon = app.icon?.let { bmp -> { Image(bmp, contentDescription = null, modifier = Modifier.size(24.dp)) } },
+        icon = app.icon?.let { bmp ->
+          {
+            Image(
+              bmp, contentDescription = null,
+              modifier = Modifier.size(24.dp).clip(CircleShape)
+            )
+          }
+        },
         modifier = Modifier.fillMaxWidth()
       )
     }
