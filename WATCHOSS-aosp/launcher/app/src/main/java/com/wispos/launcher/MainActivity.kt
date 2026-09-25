@@ -43,6 +43,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.graphics.drawable.toBitmap
@@ -276,7 +277,7 @@ fun WatchFacePage(now: LocalDateTime, context: Context, appCount: Int?, wall: Fa
       FaceWall.None -> {}
     }
     Column(
-      Modifier.fillMaxSize().padding(20.dp),
+      Modifier.fillMaxSize().padding(horizontal = 12.dp, vertical = 16.dp),
       horizontalAlignment = Alignment.CenterHorizontally,
       verticalArrangement = Arrangement.Center
     ) {
@@ -285,19 +286,24 @@ fun WatchFacePage(now: LocalDateTime, context: Context, appCount: Int?, wall: Fa
         fontSize = 11.sp,
         fontWeight = FontWeight.Medium,
         color = Color(0xFF8E8E93),
-        letterSpacing = 2.sp
+        letterSpacing = 2.sp,
+        maxLines = 1
       )
       Spacer(Modifier.height(2.dp))
       Text(
         text = time,
         fontFamily = WispFace,
         fontWeight = FontWeight.Light,
-        fontSize = 72.sp,
+        fontSize = 60.sp,
         color = Color.White,
         style = TextStyle(fontFeatureSettings = "tnum"),
-        letterSpacing = (-2).sp
+        letterSpacing = (-1).sp,
+        maxLines = 1,
+        softWrap = false,
+        textAlign = TextAlign.Center,
+        modifier = Modifier.fillMaxWidth()
       )
-      Spacer(Modifier.height(12.dp))
+      Spacer(Modifier.height(8.dp))
       // Icon-only complication row — values live inside the rings, no labels.
       Row(
         horizontalArrangement = Arrangement.spacedBy(14.dp),
@@ -322,7 +328,7 @@ fun WatchFacePage(now: LocalDateTime, context: Context, appCount: Int?, wall: Fa
 
 @Composable
 fun MiniRing(progress: Float, value: String) {
-  Box(Modifier.size(42.dp), contentAlignment = Alignment.Center) {
+  Box(Modifier.size(38.dp), contentAlignment = Alignment.Center) {
     Canvas(Modifier.fillMaxSize()) {
       drawArc(
         Color.White.copy(alpha = 0.12f), 0f, 360f, false,
