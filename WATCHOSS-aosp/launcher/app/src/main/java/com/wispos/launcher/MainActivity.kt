@@ -1,6 +1,7 @@
 package com.wispos.launcher
 
 import android.content.ComponentName
+import android.content.ContentUris
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
@@ -9,6 +10,7 @@ import android.net.Uri
 import android.os.BatteryManager
 import android.os.Build
 import android.os.Bundle
+import android.provider.MediaStore
 import android.provider.Settings
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -18,6 +20,8 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
@@ -30,6 +34,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.layout.ContentScale
@@ -49,6 +54,7 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 data class AppEntry(
@@ -97,27 +103,51 @@ fun batteryPct(context: Context): Int {
   return if (level >= 0) (level * 100 / scale) else -1
 }
 
-// ---- Custom face wallpaper (Storage Access Framework: no permissions, survives reboot)
-private const val WISP_PREFS = "wisp"
-private const val KEY_WALLPAPER = "wallpaper_uri"
-
-fun loadWallpaperUri(context: Context): Uri? {
-  val s = context.getSharedPreferences(WISP_PREFS, Context.MODE_PRIVATE)
-    .getString(KEY_WALLPAPER, null) ?: return null
-  val uri = Uri.parse(s)
-  val kept = context.contentResolver.persistedUriPermissions
-    .any { it.uri == uri && it.isReadPermission }
-  return if (kept) uri else null
+// ---- Face wallpaper: bundled OLED presets + on-device photos, picked in-app.
+// (No system picker: this emulator image ships no DocumentsUI.) Selection persists.
+sealed interface FaceWall {
+  data object None : FaceWall
+  data class Preset(val key: String) : FaceWall
+  data class Photo(val uri: Uri) : FaceWall
 }
 
-fun saveWallpaperUri(context: Context, uri: Uri?) {
+private const val WISP_PREFS = "wisp"
+private const val KEY_WALL = "face_wall"
+
+val WALL_PRESETS = listOf("ember", "abyss", "moss", "mono")
+
+fun presetBrush(key: String): Brush = when (key) {
+  "ember" -> Brush.verticalGradient(listOf(Color(0xFF2A0E0E), Color.Black))
+  "abyss" -> Brush.verticalGradient(listOf(Color(0xFF0D1B2E), Color.Black))
+  "moss" -> Brush.verticalGradient(listOf(Color(0xFF0D2A1A), Color.Black))
+  else -> Brush.verticalGradient(listOf(Color(0xFF242424), Color.Black))
+}
+
+fun loadWall(context: Context): FaceWall {
+  val s = context.getSharedPreferences(WISP_PREFS, Context.MODE_PRIVATE)
+    .getString(KEY_WALL, null) ?: return FaceWall.None
+  if (s.startsWith("preset:")) return FaceWall.Preset(s.removePrefix("preset:"))
+  return try {
+    val uri = Uri.parse(s)
+    val kept = context.contentResolver.persistedUriPermissions
+      .any { it.uri == uri && it.isReadPermission }
+    if (kept) FaceWall.Photo(uri) else FaceWall.None
+  } catch (_: Exception) { FaceWall.None }
+}
+
+fun saveWall(context: Context, wall: FaceWall) {
+  val s = when (wall) {
+    FaceWall.None -> null
+    is FaceWall.Preset -> "preset:${wall.key}"
+    is FaceWall.Photo -> wall.uri.toString()
+  }
   context.getSharedPreferences(WISP_PREFS, Context.MODE_PRIVATE).edit().apply {
-    if (uri == null) remove(KEY_WALLPAPER) else putString(KEY_WALLPAPER, uri.toString())
+    if (s == null) remove(KEY_WALL) else putString(KEY_WALL, s)
   }.apply()
 }
 
 /** Decode sampled to max 512px — a watch face never needs more, saves RAM. */
-suspend fun decodeWallpaper(context: Context, uri: Uri): ImageBitmap? = withContext(Dispatchers.IO) {
+suspend fun decodeSampledUri(context: Context, uri: Uri): ImageBitmap? = withContext(Dispatchers.IO) {
   try {
     val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
     context.contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, bounds) }
@@ -130,6 +160,39 @@ suspend fun decodeWallpaper(context: Context, uri: Uri): ImageBitmap? = withCont
   } catch (_: Exception) { null }
 }
 
+fun imagesPermissionName(): String =
+  if (Build.VERSION.SDK_INT >= 33) android.Manifest.permission.READ_MEDIA_IMAGES
+  else android.Manifest.permission.READ_EXTERNAL_STORAGE
+
+fun hasImagesPermission(context: Context): Boolean =
+  androidx.core.content.ContextCompat.checkSelfPermission(context, imagesPermissionName()) ==
+    android.content.pm.PackageManager.PERMISSION_GRANTED
+
+suspend fun loadDevicePhotos(context: Context): List<Uri> = withContext(Dispatchers.IO) {
+  try {
+    val out = mutableListOf<Uri>()
+    context.contentResolver.query(
+      MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+      arrayOf(MediaStore.Images.Media._ID),
+      null, null, "${MediaStore.Images.Media.DATE_ADDED} DESC"
+    )?.use { c ->
+      val idCol = c.getColumnIndexOrThrow(MediaStore.Images.Media._ID)
+      while (c.moveToNext() && out.size < 24) {
+        out += ContentUris.withAppendedId(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, c.getLong(idCol))
+      }
+    }
+    out
+  } catch (_: Exception) { emptyList() }
+}
+
+suspend fun loadThumb(context: Context, uri: Uri): ImageBitmap? = withContext(Dispatchers.IO) {
+  try {
+    if (Build.VERSION.SDK_INT >= 29) {
+      context.contentResolver.loadThumbnail(uri, android.util.Size(160, 160), null)?.asImageBitmap()
+    } else decodeSampledUri(context, uri)
+  } catch (_: Exception) { null }
+}
+
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun WatchOS() {
@@ -139,36 +202,40 @@ fun WatchOS() {
   // Ticking clock, recomposes once per second — cheap, one Text
   var now by remember { mutableStateOf(LocalDateTime.now()) }
   LaunchedEffect(Unit) { while (true) { delay(1000); now = LocalDateTime.now() } }
-  // Wallpaper: URI persisted in prefs, bitmap decoded once per change and cached.
-  var wallUri by remember { mutableStateOf(loadWallpaperUri(context)) }
-  var wallBmp by remember { mutableStateOf<ImageBitmap?>(null) }
-  LaunchedEffect(wallUri) {
-    wallBmp = if (wallUri != null) decodeWallpaper(context, wallUri!!) else null
+  // Face wallpaper: selection persisted, photo decoded once per change and cached.
+  var wall by remember { mutableStateOf(loadWall(context)) }
+  var wallPhoto by remember { mutableStateOf<ImageBitmap?>(null) }
+  LaunchedEffect(wall) {
+    val w = wall
+    wallPhoto = if (w is FaceWall.Photo) decodeSampledUri(context, w.uri) else null
   }
-  val pickWallpaper = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
-    if (uri != null) {
-      try {
-        context.contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
-        saveWallpaperUri(context, uri)
-        wallUri = uri
-      } catch (e: Exception) {
-        Toast.makeText(context, "Can't keep that image", Toast.LENGTH_SHORT).show()
-      }
-    }
-  }
-  val pagerState = rememberPagerState(initialPage = 1, pageCount = { 3 })
+  val scope = rememberCoroutineScope()
+  val pagerState = rememberPagerState(initialPage = 1, pageCount = { 4 })
 
   MaterialTheme {
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
       HorizontalPager(state = pagerState, modifier = Modifier.fillMaxSize()) { page ->
         when (page) {
           0 -> QuickSettingsPage(
-            hasWallpaper = wallUri != null,
-            onPickWallpaper = { pickWallpaper.launch(arrayOf("image/*")) },
-            onClearWallpaper = { saveWallpaperUri(context, null); wallUri = null }
+            onOpenGallery = { scope.launch { pagerState.animateScrollToPage(3) } }
           )
-          1 -> WatchFacePage(now, context, apps?.size, wallBmp)
+          1 -> WatchFacePage(now, context, apps?.size, wall, wallPhoto)
           2 -> AppDrawerPage(apps)
+          else -> GalleryPage(
+            current = wall,
+            onPick = { picked ->
+              if (picked is FaceWall.Photo) {
+                try {
+                  context.contentResolver.takePersistableUriPermission(
+                    picked.uri, Intent.FLAG_GRANT_READ_URI_PERMISSION
+                  )
+                } catch (_: Exception) {}
+              }
+              saveWall(context, picked)
+              wall = picked
+              scope.launch { pagerState.animateScrollToPage(1) }
+            }
+          )
         }
       }
     }
@@ -183,7 +250,7 @@ val WispFace = FontFamily(
 )
 
 @Composable
-fun WatchFacePage(now: LocalDateTime, context: Context, appCount: Int?, wallpaper: ImageBitmap?) {
+fun WatchFacePage(now: LocalDateTime, context: Context, appCount: Int?, wall: FaceWall, photo: ImageBitmap?) {
   val time = now.format(DateTimeFormatter.ofPattern("HH:mm"))
   val date = now.format(DateTimeFormatter.ofPattern("EEE, MMM d")).uppercase()
   val batt = remember { batteryPct(context) }
@@ -194,13 +261,19 @@ fun WatchFacePage(now: LocalDateTime, context: Context, appCount: Int?, wallpape
   ) {
     // Wallpaper under everything, dimmed hard so numerals stay readable
     // and OLED keeps most of its power savings.
-    if (wallpaper != null) {
-      Image(
-        wallpaper, contentDescription = null,
-        modifier = Modifier.fillMaxSize(),
-        contentScale = ContentScale.Crop
-      )
-      Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.55f)))
+    when (val w = wall) {
+      is FaceWall.Preset -> Box(Modifier.fillMaxSize().background(presetBrush(w.key)))
+      is FaceWall.Photo -> {
+        if (photo != null) {
+          Image(
+            photo, contentDescription = null,
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop
+          )
+          Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.55f)))
+        }
+      }
+      FaceWall.None -> {}
     }
     Column(
       Modifier.fillMaxSize().padding(20.dp),
@@ -265,11 +338,7 @@ fun MiniRing(progress: Float, value: String) {
 }
 
 @Composable
-fun QuickSettingsPage(
-  hasWallpaper: Boolean,
-  onPickWallpaper: () -> Unit,
-  onClearWallpaper: () -> Unit
-) {
+fun QuickSettingsPage(onOpenGallery: () -> Unit) {
   val context = LocalContext.current
   val batt = remember { batteryPct(context) }
   fun openSettings(action: String) {
@@ -312,19 +381,10 @@ fun QuickSettingsPage(
     }
     item {
       Chip(
-        onClick = onPickWallpaper,
-        label = { Text(if (hasWallpaper) "Change wallpaper" else "Face wallpaper") },
+        onClick = onOpenGallery,
+        label = { Text("Face wallpaper") },
         modifier = Modifier.fillMaxWidth()
       )
-    }
-    if (hasWallpaper) {
-      item {
-        Chip(
-          onClick = onClearWallpaper,
-          label = { Text("Clear wallpaper") },
-          modifier = Modifier.fillMaxWidth()
-        )
-      }
     }
   }
 }
@@ -362,6 +422,92 @@ fun AppDrawerPage(apps: List<AppEntry>?) {
         },
         modifier = Modifier.fillMaxWidth()
       )
+    }
+  }
+}
+
+@Composable
+fun GalleryPage(current: FaceWall, onPick: (FaceWall) -> Unit) {
+  val context = LocalContext.current
+  var photos by remember { mutableStateOf<List<Uri>?>(null) }
+  var thumbs by remember { mutableStateOf<Map<Uri, ImageBitmap?>>(emptyMap()) }
+  var permRound by remember { mutableStateOf(0) }
+  val askPerm = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+    if (granted) permRound++ // re-query now that we may read images
+  }
+  LaunchedEffect(permRound) {
+    if (hasImagesPermission(context)) {
+      val list = loadDevicePhotos(context)
+      photos = list
+      val m = mutableMapOf<Uri, ImageBitmap?>()
+      for (u in list) m[u] = loadThumb(context, u)
+      thumbs = m
+    } else {
+      photos = emptyList()
+      askPerm.launch(imagesPermissionName())
+    }
+  }
+
+  fun selected(target: FaceWall): Modifier =
+    if (current == target) Modifier.border(2.dp, Color.White, CircleShape)
+    else Modifier
+
+  ScalingLazyColumn(
+    state = rememberScalingLazyListState(),
+    contentPadding = PaddingValues(12.dp),
+    verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterVertically)
+  ) {
+    item { ListHeader { Text("Face") } }
+    item {
+      Row(
+        Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceEvenly,
+        verticalAlignment = Alignment.CenterVertically
+      ) {
+        // Pure black first — the battery king.
+        Box(
+          Modifier.size(48.dp).clip(CircleShape).background(Color.Black)
+            .border(1.dp, Color.White.copy(alpha = 0.25f), CircleShape)
+            .then(selected(FaceWall.None))
+            .clickable { onPick(FaceWall.None) }
+        )
+        WALL_PRESETS.forEach { key ->
+          Box(
+            Modifier.size(48.dp).clip(CircleShape).background(presetBrush(key))
+              .then(selected(FaceWall.Preset(key)))
+              .clickable { onPick(FaceWall.Preset(key)) }
+          )
+        }
+      }
+    }
+    val list = photos
+    if (!list.isNullOrEmpty()) {
+      item { ListHeader { Text("On this watch") } }
+      items(list.chunked(3)) { row ->
+        Row(
+          Modifier.fillMaxWidth(),
+          horizontalArrangement = Arrangement.SpaceEvenly
+        ) {
+          row.forEach { uri ->
+            val bmp = thumbs[uri]
+            Box(
+              Modifier.size(52.dp).clip(CircleShape)
+                .background(Color.White.copy(alpha = 0.08f))
+                .then(selected(FaceWall.Photo(uri)))
+                .clickable { onPick(FaceWall.Photo(uri)) },
+              contentAlignment = Alignment.Center
+            ) {
+              if (bmp != null) {
+                Image(
+                  bmp, contentDescription = null,
+                  modifier = Modifier.fillMaxSize().clip(CircleShape),
+                  contentScale = ContentScale.Crop
+                )
+              }
+            }
+          }
+        }
+      }
     }
   }
 }
