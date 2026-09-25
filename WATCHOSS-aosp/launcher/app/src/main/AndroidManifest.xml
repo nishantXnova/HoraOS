@@ -16,6 +16,10 @@
   <application
     android:label="HoraOS"
     android:theme="@android:style/Theme.DeviceDefault.NoActionBar">
+    <!-- HoraOS works fully standalone, no phone companion app required -->
+    <meta-data
+      android:name="com.google.android.wearable.standalone"
+      android:value="true" />
     <activity
       android:name=".MainActivity"
       android:exported="true"
