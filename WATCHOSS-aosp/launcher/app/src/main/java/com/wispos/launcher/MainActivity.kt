@@ -10,6 +10,8 @@ import android.net.Uri
 import android.os.BatteryManager
 import android.os.Build
 import android.os.Bundle
+import android.os.VibrationEffect
+import android.os.Vibrator
 import android.provider.MediaStore
 import android.provider.Settings
 import android.widget.Toast
@@ -22,6 +24,7 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
@@ -37,6 +40,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
@@ -102,6 +106,38 @@ fun batteryPct(context: Context): Int {
   val level = f.getIntExtra(BatteryManager.EXTRA_LEVEL, -1)
   val scale = f.getIntExtra(BatteryManager.EXTRA_SCALE, 100)
   return if (level >= 0) (level * 100 / scale) else -1
+}
+
+/** 12ms tap confirmation — the cheapest premium feel there is. */
+fun buzz(context: Context) {
+  try {
+    val vib = context.getSystemService(Vibrator::class.java) ?: return
+    vib.vibrate(VibrationEffect.createOneShot(12, VibrationEffect.DEFAULT_AMPLITUDE))
+  } catch (_: Exception) {}
+}
+
+/** Open a system screen, falling back to plain Settings. Shared by tiles + rings. */
+fun fireSettings(context: Context, action: String) {
+  try {
+    context.startActivity(Intent(action).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+  } catch (_: Exception) {
+    try {
+      context.startActivity(Intent(Settings.ACTION_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+    } catch (_: Exception) {}
+  }
+}
+
+// ---- Recents: last 5 launched packages, most-recent-first, prefs-backed
+private const val KEY_RECENTS = "recent_apps"
+
+fun loadRecents(context: Context): List<String> =
+  context.getSharedPreferences(WISP_PREFS, Context.MODE_PRIVATE)
+    .getString(KEY_RECENTS, null)?.split(",")?.filter { it.isNotBlank() } ?: emptyList()
+
+fun pushRecent(context: Context, packageName: String) {
+  val updated = ([packageName] + loadRecents(context).filter { it != packageName }).take(5)
+  context.getSharedPreferences(WISP_PREFS, Context.MODE_PRIVATE).edit()
+    .putString(KEY_RECENTS, updated.joinToString(",")).apply()
 }
 
 // ---- Face wallpaper: bundled OLED presets + on-device photos, picked in-app.
@@ -210,6 +246,18 @@ fun WatchOS() {
     val w = wall
     wallPhoto = if (w is FaceWall.Photo) decodeSampledUri(context, w.uri) else null
   }
+  // Recents row data.
+  var recentPkgs by remember { mutableStateOf(loadRecents(context)) }
+  fun launchApp(entry: AppEntry) {
+    buzz(context)
+    try {
+      context.startActivity(entry.launchIntent)
+      pushRecent(context, entry.packageName)
+      recentPkgs = loadRecents(context)
+    } catch (_: Exception) {
+      Toast.makeText(context, "Can't open ${entry.label}", Toast.LENGTH_SHORT).show()
+    }
+  }
   val scope = rememberCoroutineScope()
   val pagerState = rememberPagerState(initialPage = 1, pageCount = { 4 })
 
@@ -220,8 +268,18 @@ fun WatchOS() {
           0 -> QuickSettingsPage(
             onOpenGallery = { scope.launch { pagerState.animateScrollToPage(3) } }
           )
-          1 -> WatchFacePage(now, context, apps?.size, wall, wallPhoto)
-          2 -> AppDrawerPage(apps)
+          1 -> WatchFacePage(
+            now, context, apps?.size, wall, wallPhoto,
+            onRingTap = { key ->
+              buzz(context)
+              when (key) {
+                "battery" -> fireSettings(context, Intent.ACTION_POWER_USAGE_SUMMARY)
+                "apps" -> scope.launch { pagerState.animateScrollToPage(2) }
+                else -> fireSettings(context, android.provider.Settings.ACTION_SHOW_ALARMS)
+              }
+            }
+          )
+          2 -> AppDrawerPage(apps, recentPkgs) { entry -> launchApp(entry) }
           else -> GalleryPage(
             current = wall,
             onPick = { picked ->
@@ -251,8 +309,16 @@ val WispFace = FontFamily(
 )
 
 @Composable
-fun WatchFacePage(now: LocalDateTime, context: Context, appCount: Int?, wall: FaceWall, photo: ImageBitmap?) {
-  val time = now.format(DateTimeFormatter.ofPattern("HH:mm"))
+fun WatchFacePage(
+  now: LocalDateTime,
+  context: Context,
+  appCount: Int?,
+  wall: FaceWall,
+  photo: ImageBitmap?,
+  onRingTap: (String) -> Unit
+) {
+  val use24 = remember { android.text.format.DateFormat.is24HourFormat(context) }
+  val time = now.format(DateTimeFormatter.ofPattern(if (use24) "HH:mm" else "hh:mm"))
   val date = now.format(DateTimeFormatter.ofPattern("EEE, MMM d")).uppercase()
   val batt = remember { batteryPct(context) }
   val apps = (appCount ?: 0).coerceAtLeast(0)
@@ -311,15 +377,18 @@ fun WatchFacePage(now: LocalDateTime, context: Context, appCount: Int?, wall: Fa
       ) {
         MiniRing(
           progress = if (batt >= 0) batt / 100f else 0f,
-          value = if (batt >= 0) "$batt" else "–"
+          value = if (batt >= 0) "$batt" else "–",
+          onClick = { onRingTap("battery") }
         )
         MiniRing(
           progress = (apps / 20f).coerceIn(0f, 1f),
-          value = "$apps"
+          value = "$apps",
+          onClick = { onRingTap("apps") }
         )
         MiniRing(
           progress = now.dayOfMonth / 31f,
-          value = "${now.dayOfMonth}"
+          value = "${now.dayOfMonth}",
+          onClick = { onRingTap("day") }
         )
       }
     }
@@ -327,8 +396,11 @@ fun WatchFacePage(now: LocalDateTime, context: Context, appCount: Int?, wall: Fa
 }
 
 @Composable
-fun MiniRing(progress: Float, value: String) {
-  Box(Modifier.size(38.dp), contentAlignment = Alignment.Center) {
+fun MiniRing(progress: Float, value: String, onClick: () -> Unit) {
+  Box(
+    Modifier.size(38.dp).clip(CircleShape).clickable(onClick = onClick),
+    contentAlignment = Alignment.Center
+  ) {
     Canvas(Modifier.fillMaxSize()) {
       drawArc(
         Color.White.copy(alpha = 0.12f), 0f, 360f, false,
@@ -348,11 +420,8 @@ fun QuickSettingsPage(onOpenGallery: () -> Unit) {
   val context = LocalContext.current
   val batt = remember { batteryPct(context) }
   fun openSettings(action: String) {
-    try { context.startActivity(Intent(action).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
-    catch (_: Exception) {
-      try { context.startActivity(Intent(Settings.ACTION_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
-      catch (_: Exception) {}
-    }
+    buzz(context)
+    fireSettings(context, action)
   }
   ScalingLazyColumn(
     state = rememberScalingLazyListState(),
@@ -396,39 +465,86 @@ fun QuickSettingsPage(onOpenGallery: () -> Unit) {
 }
 
 @Composable
-fun AppDrawerPage(apps: List<AppEntry>?) {
+fun AppDrawerPage(
+  apps: List<AppEntry>?,
+  recentPkgs: List<String>,
+  onLaunch: (AppEntry) -> Unit
+) {
   val context = LocalContext.current
+  // Jiggle-mode-lite: long-press the header, chips flip to ✕ and open App info
+  // (the system screen carries Uninstall). Long-press again to exit.
+  var manage by remember { mutableStateOf(false) }
   if (apps == null) {
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("Loading apps…") }
     return
   }
-  ScalingLazyColumn(
-    state = rememberScalingLazyListState(),
-    contentPadding = PaddingValues(12.dp),
-    verticalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterVertically)
-  ) {
-    item { ListHeader { Text("${apps.size} apps") } }
-    items(apps, key = { it.packageName }) { app ->
-      Chip(
-        onClick = {
+  val byPkg = remember(apps) { apps.associateBy { it.packageName } }
+  val recents = remember(apps, recentPkgs) { recentPkgs.mapNotNull { byPkg[it] } }
+
+  @Composable
+  fun AppChip(entry: AppEntry) {
+    val inManage = manage
+    Chip(
+      onClick = {
+        if (inManage) {
+          buzz(context)
           try {
-            context.startActivity(app.launchIntent)
-          } catch (e: Exception) {
-            Toast.makeText(context, "Can't open ${app.label}", Toast.LENGTH_SHORT).show()
-          }
-        },
-        label = { Text(app.label, maxLines = 1) },
-        icon = app.icon?.let { bmp ->
-          {
+            context.startActivity(
+              Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                .setData(android.net.Uri.parse("package:${entry.packageName}"))
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            )
+          } catch (_: Exception) {}
+        } else {
+          onLaunch(entry)
+        }
+      },
+      label = { Text(entry.label, maxLines = 1) },
+      icon = {
+        if (inManage) {
+          Text("✕", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color(0xFFFF6B60))
+        } else {
+          entry.icon?.let { bmp ->
             Image(
               bmp, contentDescription = null,
               modifier = Modifier.size(24.dp).clip(CircleShape)
             )
           }
-        },
-        modifier = Modifier.fillMaxWidth()
-      )
+        }
+      },
+      modifier = Modifier.fillMaxWidth()
+    )
+  }
+
+  ScalingLazyColumn(
+    state = rememberScalingLazyListState(),
+    contentPadding = PaddingValues(12.dp),
+    verticalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterVertically)
+  ) {
+    item {
+      ListHeader(
+        modifier = Modifier.pointerInput(Unit) {
+          detectTapGestures(onLongPress = {
+            buzz(context)
+            manage = !manage
+          })
+        }
+      ) { Text(if (manage) "Tap ✕ app for info" else "${apps.size} apps") }
     }
+    if (manage) {
+      item {
+        Chip(
+          onClick = { manage = false },
+          label = { Text("Done") },
+          modifier = Modifier.fillMaxWidth()
+        )
+      }
+    } else if (recents.isNotEmpty()) {
+      item { ListHeader { Text("Recent") } }
+      items(recents, key = { "r:${it.packageName}" }) { AppChip(it) }
+      item { ListHeader { Text("All") } }
+    }
+    items(apps, key = { it.packageName }) { AppChip(it) }
   }
 }
 
