@@ -4,13 +4,17 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.graphics.BitmapFactory
+import android.net.Uri
 import android.os.BatteryManager
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -28,6 +32,7 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
@@ -92,6 +97,39 @@ fun batteryPct(context: Context): Int {
   return if (level >= 0) (level * 100 / scale) else -1
 }
 
+// ---- Custom face wallpaper (Storage Access Framework: no permissions, survives reboot)
+private const val WISP_PREFS = "wisp"
+private const val KEY_WALLPAPER = "wallpaper_uri"
+
+fun loadWallpaperUri(context: Context): Uri? {
+  val s = context.getSharedPreferences(WISP_PREFS, Context.MODE_PRIVATE)
+    .getString(KEY_WALLPAPER, null) ?: return null
+  val uri = Uri.parse(s)
+  val kept = context.contentResolver.persistedUriPermissions
+    .any { it.uri == uri && it.isReadPermission }
+  return if (kept) uri else null
+}
+
+fun saveWallpaperUri(context: Context, uri: Uri?) {
+  context.getSharedPreferences(WISP_PREFS, Context.MODE_PRIVATE).edit().apply {
+    if (uri == null) remove(KEY_WALLPAPER) else putString(KEY_WALLPAPER, uri.toString())
+  }.apply()
+}
+
+/** Decode sampled to max 512px — a watch face never needs more, saves RAM. */
+suspend fun decodeWallpaper(context: Context, uri: Uri): ImageBitmap? = withContext(Dispatchers.IO) {
+  try {
+    val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+    context.contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, bounds) }
+    var sample = 1
+    while (bounds.outWidth / sample > 512 || bounds.outHeight / sample > 512) sample *= 2
+    val opts = BitmapFactory.Options().apply { inSampleSize = sample }
+    context.contentResolver.openInputStream(uri)?.use {
+      BitmapFactory.decodeStream(it, null, opts)?.asImageBitmap()
+    }
+  } catch (_: Exception) { null }
+}
+
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun WatchOS() {
@@ -101,14 +139,35 @@ fun WatchOS() {
   // Ticking clock, recomposes once per second — cheap, one Text
   var now by remember { mutableStateOf(LocalDateTime.now()) }
   LaunchedEffect(Unit) { while (true) { delay(1000); now = LocalDateTime.now() } }
+  // Wallpaper: URI persisted in prefs, bitmap decoded once per change and cached.
+  var wallUri by remember { mutableStateOf(loadWallpaperUri(context)) }
+  var wallBmp by remember { mutableStateOf<ImageBitmap?>(null) }
+  LaunchedEffect(wallUri) {
+    wallBmp = if (wallUri != null) decodeWallpaper(context, wallUri!!) else null
+  }
+  val pickWallpaper = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+    if (uri != null) {
+      try {
+        context.contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        saveWallpaperUri(context, uri)
+        wallUri = uri
+      } catch (e: Exception) {
+        Toast.makeText(context, "Can't keep that image", Toast.LENGTH_SHORT).show()
+      }
+    }
+  }
   val pagerState = rememberPagerState(initialPage = 1, pageCount = { 3 })
 
   MaterialTheme {
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
       HorizontalPager(state = pagerState, modifier = Modifier.fillMaxSize()) { page ->
         when (page) {
-          0 -> QuickSettingsPage()
-          1 -> WatchFacePage(now, context, apps?.size)
+          0 -> QuickSettingsPage(
+            hasWallpaper = wallUri != null,
+            onPickWallpaper = { pickWallpaper.launch(arrayOf("image/*")) },
+            onClearWallpaper = { saveWallpaperUri(context, null); wallUri = null }
+          )
+          1 -> WatchFacePage(now, context, apps?.size, wallBmp)
           2 -> AppDrawerPage(apps)
         }
       }
@@ -124,16 +183,30 @@ val WispFace = FontFamily(
 )
 
 @Composable
-fun WatchFacePage(now: LocalDateTime, context: Context, appCount: Int?) {
+fun WatchFacePage(now: LocalDateTime, context: Context, appCount: Int?, wallpaper: ImageBitmap?) {
   val time = now.format(DateTimeFormatter.ofPattern("HH:mm"))
   val date = now.format(DateTimeFormatter.ofPattern("EEE, MMM d")).uppercase()
   val batt = remember { batteryPct(context) }
   val apps = (appCount ?: 0).coerceAtLeast(0)
   Box(
-    Modifier.fillMaxSize().background(Color.Black).padding(20.dp),
+    Modifier.fillMaxSize().background(Color.Black),
     contentAlignment = Alignment.Center
   ) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+    // Wallpaper under everything, dimmed hard so numerals stay readable
+    // and OLED keeps most of its power savings.
+    if (wallpaper != null) {
+      Image(
+        wallpaper, contentDescription = null,
+        modifier = Modifier.fillMaxSize(),
+        contentScale = ContentScale.Crop
+      )
+      Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.55f)))
+    }
+    Column(
+      Modifier.fillMaxSize().padding(20.dp),
+      horizontalAlignment = Alignment.CenterHorizontally,
+      verticalArrangement = Arrangement.Center
+    ) {
       Text(
         text = date,
         fontSize = 11.sp,
@@ -192,7 +265,11 @@ fun MiniRing(progress: Float, value: String) {
 }
 
 @Composable
-fun QuickSettingsPage() {
+fun QuickSettingsPage(
+  hasWallpaper: Boolean,
+  onPickWallpaper: () -> Unit,
+  onClearWallpaper: () -> Unit
+) {
   val context = LocalContext.current
   val batt = remember { batteryPct(context) }
   fun openSettings(action: String) {
@@ -232,6 +309,22 @@ fun QuickSettingsPage() {
         label = { Text(if (batt >= 0) "Battery $batt%" else "Battery") },
         modifier = Modifier.fillMaxWidth()
       )
+    }
+    item {
+      Chip(
+        onClick = onPickWallpaper,
+        label = { Text(if (hasWallpaper) "Change wallpaper" else "Face wallpaper") },
+        modifier = Modifier.fillMaxWidth()
+      )
+    }
+    if (hasWallpaper) {
+      item {
+        Chip(
+          onClick = onClearWallpaper,
+          label = { Text("Clear wallpaper") },
+          modifier = Modifier.fillMaxWidth()
+        )
+      }
     }
   }
 }
