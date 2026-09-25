@@ -1,10 +1,10 @@
-# Contributing to HoraOS
+# Contributing to WispOS
 
 Thanks for helping build the lean Wear alternative. Small, focused PRs beat big ones.
 
 ## Prereqs
 - Android Studio (Ladybug+) with a Wear OS 5+ emulator image
-- JDK 17 (the project pins Gradle to it — see `HoraOS-aosp/launcher/gradle.properties`)
+- JDK 17 (the project pins Gradle to it — see `WATCHOSS-aosp/launcher/gradle.properties`)
 - The Gradle wrapper in `WATCHOSS-aosp/launcher` (8.10.2, cached after first sync)
 
 ## Workflow
@@ -25,5 +25,5 @@ Thanks for helping build the lean Wear alternative. Small, focused PRs beat big 
 - Never commit: keystores, `local.properties`, API keys, `build/` output (see `.gitignore`)
 
 ## Reporting bugs
-Include: emulator image (e.g. Wear OS 5 x86_64), HoraOS version, steps, expected vs
+Include: emulator image (e.g. Wear OS 5 x86_64), WispOS version, steps, expected vs
 actual, and logcat around the failure.

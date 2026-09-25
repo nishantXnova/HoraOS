@@ -1,4 +1,4 @@
-package com.horaos.launcher
+package com.wispos.launcher
 
 import android.content.ComponentName
 import android.content.Context
@@ -115,7 +115,7 @@ fun WatchOS() {
 
 // Rounded heavy sans (Nunito ExtraBold, SIL OFL, bundled) — closest legal
 // stand-in for a compact rounded watch typeface. Tabular numerals kill jitter.
-val HoraFace = FontFamily(Font(R.font.nunito_extrabold, FontWeight.ExtraBold))
+val WispFace = FontFamily(Font(R.font.nunito_extrabold, FontWeight.ExtraBold))
 
 @Composable
 fun WatchFacePage(now: LocalDateTime, context: Context, appCount: Int?) {
@@ -129,7 +129,7 @@ fun WatchFacePage(now: LocalDateTime, context: Context, appCount: Int?) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
       Text(
         text = time,
-        fontFamily = HoraFace,
+        fontFamily = WispFace,
         fontSize = 64.sp,
         color = Color.White,
         style = TextStyle(fontFeatureSettings = "tnum"),

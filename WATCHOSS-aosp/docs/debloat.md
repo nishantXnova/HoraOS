@@ -17,7 +17,7 @@ com.google.android.gms # GMS core — needed unless you switch to MicroG
 com.google.android.gsf
 com.android.vending # Play Store / Aurora shim needs framework
 com.android.systemui
-com.android.launcher # keep until HoraOS launcher set default
+com.android.launcher # keep until WispOS launcher set default
 ```
 
 Apply: `tools/debloat.ps1 -Mode safe` measures `adb shell dumpsys batterystats` before/after.

@@ -1,4 +1,4 @@
-package com.horaos.launcher
+package com.wispos.launcher
 
 /** Pure presentation logic for the watch face + drawer. Kept side-effect free so unit tests cover it. */
 

@@ -1,6 +1,6 @@
 # HoraOS reproducible build image — same JDK/SDK/AGP everywhere.
-# Build:  docker build -t horaos .
-# Run:    docker run --rm -v "%CD%:/horaos" horaos
+# Build:  docker build -t wispos .
+# Run:    docker run --rm -v "%CD%:/wispos" wispos
 FROM ubuntu:24.04
 
 ENV DEBIAN_FRONTEND=noninteractive \
@@ -22,5 +22,5 @@ RUN mkdir -p /opt/android-sdk/cmdline-tools \
  && yes | sdkmanager --licenses >/dev/null \
  && sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
 
-WORKDIR /horaos
+WORKDIR /wispos
 CMD ["bash", "-c", "cd WATCHOSS-aosp/launcher && ./gradlew :app:assembleDebug :app:lintDebug :app:testDebugUnitTest"]

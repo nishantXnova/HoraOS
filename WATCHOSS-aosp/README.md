@@ -1,8 +1,8 @@
-# HoraOS (WATCHOSS-aosp) — Minimal AOSP Wear, lean + smooth + compatible (ACTIVE)
+# WispOS (WATCHOSS-aosp) — Minimal AOSP Wear, lean + smooth + compatible (ACTIVE)
 
 ## Status: launcher v0.3 runs on emulator ✅
 3-screen OS feel: **quick settings | watch face | real app drawer**. Build green (~5s incremental).
-Brand: **HoraOS**, package `com.horaos.launcher`.
+Brand: **WispOS**, package `com.wispos.launcher`.
 Compat proof: **reReminder (F-Droid) installed, listed in drawer, launches** ✅
 
 ## What works now
@@ -19,15 +19,15 @@ Compat proof: **reReminder (F-Droid) installed, listed in drawer, launches** ✅
 3. `org.jetbrains.kotlin.plugin.compose:1.9.24` not found → removed (Kotlin-1.9-era Compose needs no such plugin) + `composeOptions.kotlinCompilerExtensionVersion = "1.5.14"`
 4. `fillMaxWidth` unresolved → proper `Modifier` imports + `compose.ui:ui` / `foundation-layout` deps
 5. Stub list → real `queryIntentActivities` + `getLaunchIntentForPackage` + icon bitmap cache
-6. Rename WATCHOSS → HoraOS: package, label, project name, docs
+6. Rename WATCHOSS → HoraOS → WispOS: package, label, project name, docs
 
 ## Run
 1. Open `WATCHOSS-aosp/launcher` in Android Studio
 2. Device → booted `Wear OS Small Round` → ▶ **Run 'app'**
-3. Watch → swipe up → tap **HoraOS** → swipe left/right between screens
+3. Watch → swipe up → tap **WispOS** → swipe left/right between screens
 
-Note: the old `com.watchoss.launcher` copy may still sit on the emulator — uninstall it
-via watch Settings → Apps once the HoraOS build is on.
+Note: old `com.watchoss.launcher` / `com.horaos.launcher` copies may still sit on the
+via watch Settings → Apps once the WispOS build is on.
 
 ## Still efficient?
 - No GMS calls, no network on hot path, icons decoded once off-main-thread and cached
@@ -36,6 +36,6 @@ via watch Settings → Apps once the HoraOS build is on.
 ## Next
 - [x] Confirm drawer shows all system apps + launches them (incl. F-Droid proof: reReminder)
 - [ ] Scroll-fps check + overdraw pass on round screen
-- [ ] Set HoraOS as default HOME, test crown/home-button behavior
+- [ ] Set WispOS as default HOME, test crown/home-button behavior
 - [ ] `tools/debloat.ps1` safe pass, measure idle drain
 - [ ] Aurora Store APK install test (compat proof)

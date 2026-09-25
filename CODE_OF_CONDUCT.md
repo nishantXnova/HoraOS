@@ -1,7 +1,7 @@
 # Contributor Covenant Code of Conduct (v2.1, condensed)
 
 ## Our Pledge
-We pledge to make participation in HoraOS a harassment-free experience for
+We pledge to make participation in WispOS a harassment-free experience for
 everyone, regardless of age, body size, disability, ethnicity, gender identity,
 experience level, nationality, or religion.
 

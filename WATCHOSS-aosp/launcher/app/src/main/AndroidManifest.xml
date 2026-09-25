@@ -14,9 +14,9 @@
     </intent>
   </queries>
   <application
-    android:label="HoraOS"
+    android:label="WispOS"
     android:theme="@android:style/Theme.DeviceDefault.NoActionBar">
-    <!-- HoraOS works fully standalone, no phone companion app required -->
+    <!-- WispOS works fully standalone, no phone companion app required -->
     <meta-data
       android:name="com.google.android.wearable.standalone"
       android:value="true" />

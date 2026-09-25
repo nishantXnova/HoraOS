@@ -7,7 +7,7 @@
 - [ ] File baseline in tools/metrics.md
 
 ## Phase 1 — Fork & Optimize launcher+core
-- [ ] Fork meta-asteroid, asteroid-launcher, qml-asteroid into HoraOS org
+- [ ] Fork meta-asteroid, asteroid-launcher, qml-asteroid into WispOS org
 - [ ] systemd preset slim, Qt6 RHI on, QML heavy effects removed
 - [ ] MCE suspend tuning, zram on
 - [ ] Target: -30% RAM, no dropped frames in launcher swipe

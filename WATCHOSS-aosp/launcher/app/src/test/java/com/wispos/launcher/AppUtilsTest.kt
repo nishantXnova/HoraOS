@@ -1,4 +1,4 @@
-package com.horaos.launcher
+package com.wispos.launcher
 
 import org.junit.Assert.assertEquals
 import org.junit.Test

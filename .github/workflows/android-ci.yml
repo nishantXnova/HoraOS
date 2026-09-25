@@ -40,7 +40,7 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: horaos-debug-apk
+          name: wispos-debug-apk
           path: WATCHOSS-aosp/launcher/app/build/outputs/apk/debug/*.apk
 
       - name: Upload lint report

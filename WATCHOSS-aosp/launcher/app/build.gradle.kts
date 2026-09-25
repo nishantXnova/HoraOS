@@ -3,10 +3,10 @@ plugins {
   id("org.jetbrains.kotlin.android")
 }
 android {
-  namespace = "com.horaos.launcher"
+  namespace = "com.wispos.launcher"
   compileSdk = 34
   defaultConfig {
-    applicationId = "com.horaos.launcher"
+    applicationId = "com.wispos.launcher"
     minSdk = 30 // Wear OS 3+ (TicWatch Pro 3, Fossil Gen6)
     targetSdk = 34
     versionCode = 1

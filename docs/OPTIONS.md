@@ -1,4 +1,4 @@
-# HoraOS Options — Efficiency dialed down, Compatibility + Smoothness up
+# WispOS Options — Efficiency dialed down, Compatibility + Smoothness up
 
 Goal shift: still efficient, but prioritize GREAT compat (APK/Play-style) + smooth 60fps.
 

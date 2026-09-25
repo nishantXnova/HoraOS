@@ -1,4 +1,4 @@
-# HoraOS Architecture (Fork of AsteroidOS 2.0)
+# WispOS Architecture (Fork of AsteroidOS 2.0)
 
 ## Upstream baseline
 - Build: OpenEmbedded/Yocto + bitbake `asteroid-image`
@@ -8,7 +8,7 @@
 - BT sync: `asteroid-btsyncd` + BlueZ 5 (BLE GATT to Android AsteroidOSync app)
 - Apps: QML + `qml-asteroid` components, SDK via Yocto cross-toolchain
 
-## What HoraOS changes (fork-and-optimize)
+## What WispOS changes (fork-and-optimize)
 
 ### 1. Efficient
 - `systemd` minimal preset: disable udev bloat, journald volatile, remove ModemManager where unused

@@ -16,7 +16,7 @@ You asked for: "like Galaxy Watch, handle apps from Play Store really well."
    - On QEMU: feasible to demo 1-2 APKs. On old watches (512MB): unusable, kills efficiency goal.
    - So: OFF by default, QEMU/high-end only.
 
-## Recommendation for HoraOS
+## Recommendation for WispOS
 Phase 0-1: nail L0+L1+PWA. Market as "Asteroid-compatible, 2x battery, 60fps."
 Phase 2: prove one APK (e.g. Calculator) in Waydroid on QEMU to validate path, then decide if worth it.
 
