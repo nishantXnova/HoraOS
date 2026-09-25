@@ -225,7 +225,7 @@ suspend fun loadDevicePhotos(context: Context): List<Uri> = withContext(Dispatch
 suspend fun loadThumb(context: Context, uri: Uri): ImageBitmap? = withContext(Dispatchers.IO) {
   try {
     if (Build.VERSION.SDK_INT >= 29) {
-      context.contentResolver.loadThumbnail(uri, android.util.Size(160, 160), null)?.asImageBitmap()
+      context.contentResolver.loadThumbnail(uri, android.util.Size(160, 160), null).asImageBitmap()
     } else decodeSampledUri(context, uri)
   } catch (_: Exception) { null }
 }
