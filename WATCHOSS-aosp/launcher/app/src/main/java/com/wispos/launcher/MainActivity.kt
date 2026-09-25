@@ -112,7 +112,7 @@ sealed interface FaceWall {
   data class Photo(val uri: Uri) : FaceWall
 }
 
-private const val WISP_PREFS = "wisp"
+internal const val WISP_PREFS = "wisp"
 private const val KEY_WALL = "face_wall"
 
 val WALL_PRESETS = listOf("ember", "abyss", "moss", "mono")
