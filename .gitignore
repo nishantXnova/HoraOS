@@ -1,0 +1,37 @@
+# Android / Gradle
+*.apk
+*.aab
+*.ap_
+*.dex
+local.properties
+.gradle/
+build/
+**/build/
+captures/
+.externalNativeBuild/
+.cxx/
+*.hprof
+
+# Android Studio / IntelliJ
+.idea/
+*.iml
+*.iws
+*.ipr
+.DS_Store
+
+# Keystores — NEVER commit signing keys
+*.jks
+*.keystore
+
+# Reference clone (see docs/BUILD-QEMU.md for upstream URL)
+upstream/
+
+# OS / sync junk
+Thumbs.db
+Desktop.ini
+*.tmp
+*.log
+
+# Local SDK / temp downloads
+sdk/
+*.zip

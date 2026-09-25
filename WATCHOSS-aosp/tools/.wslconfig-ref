@@ -1,0 +1,6 @@
+# WSL2 memory for Android emulator + Studio
+[wsl2]
+memory=16GB
+processors=8
+swap=8GB
+# Keep Yocto OUT of OneDrive. Android builds stay on C: SSD, fine.
