@@ -1,0 +1,3 @@
+First public build: live face, quick settings, real app drawer with recents,
+in-app wallpaper gallery, haptics, 12/24h system clock. Install via sideload,
+set as Home app.

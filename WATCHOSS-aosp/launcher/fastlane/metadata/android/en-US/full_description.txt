@@ -1,0 +1,9 @@
+WispOS replaces your watch's home screen with something leaner and fully open-source.
+
+• Live watch face with complications that actually open things
+• Quick settings, real app drawer with recent apps
+• Custom face wallpapers (bundled OLED presets or your photos)
+• Zero Google Play Services dependency — F-Droid and Aurora Store friendly
+• No accounts, no tracking, no background drain
+
+Sideload the APK, set WispOS as your Home app, press the crown. That's the whole setup.

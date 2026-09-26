@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>WispOS — Time, kept beautifully.</title>
+<meta name="description" content="WispOS is a quieter way to wear a watch. A clear face, simple controls, and the apps you already love. Free and open." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='38' fill='black'/><circle cx='50' cy='50' r='3.5' fill='white'/><line x1='50' y1='50' x2='50' y2='28' stroke='white' stroke-width='5' stroke-linecap='round'/><line x1='50' y1='50' x2='68' y2='58' stroke='white' stroke-width='5' stroke-linecap='round'/></svg>" />
+</head>
+<body>
+
+<div class="grain" aria-hidden="true"></div>
+
+<!-- NAV -->
+<header class="nav" id="nav">
+  <div class="nav-inner">
+    <a class="brand" href="#top" aria-label="WispOS home">
+      <span class="brand-mark" aria-hidden="true">
+        <svg width="18" height="18" viewBox="0 0 100 100"><circle cx="50" cy="50" r="38" fill="none" stroke="currentColor" stroke-width="10"/><circle cx="50" cy="50" r="6" fill="currentColor"/><line x1="50" y1="50" x2="50" y2="28" stroke="currentColor" stroke-width="8" stroke-linecap="round"/><line x1="50" y1="50" x2="68" y2="58" stroke="currentColor" stroke-width="8" stroke-linecap="round"/></svg>
+      </span>
+      <span class="brand-word">WispOS</span>
+    </a>
+    <nav class="nav-links">
+      <a href="#why">Why</a>
+      <a href="#experience">Experience</a>
+      <a href="#apps">Apps</a>
+      <a href="#calm">Battery</a>
+    </nav>
+    <div class="nav-cta">
+      <a class="btn btn-small btn-dark" href="#get">Get preview</a>
+    </div>
+    <button class="menu-btn" id="menuBtn" aria-label="Menu"><span></span><span></span></button>
+  </div>
+  <div class="mobile-menu" id="mobileMenu">
+    <a href="#why">Why</a>
+    <a href="#experience">Experience</a>
+    <a href="#apps">Apps</a>
+    <a href="#calm">Battery</a>
+    <a href="#get" class="btn btn-dark">Get preview</a>
+  </div>
+</header>
+
+<main id="top">
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-copy reveal">
+      <p class="eyebrow"><span class="pulse"></span> Introducing WispOS &nbsp;·&nbsp; Preview 0.3</p>
+      <h1>Time,<br/>kept beautifully.</h1>
+      <p class="lede">WispOS is a quieter way to wear a watch. A clear face, simple controls, and the apps you already love — without the noise that slows you down.</p>
+      <div class="hero-actions">
+        <a href="#experience" class="btn btn-blue">See how it feels</a>
+        <a href="#get" class="btn btn-link">Get the preview <span aria-hidden="true">›</span></a>
+      </div>
+      <p class="hero-note">Free and open &nbsp;·&nbsp; Works with your favourite Android apps &nbsp;·&nbsp; No account needed</p>
+    </div>
+
+    <div class="hero-stage reveal" id="heroStage">
+      <div class="hero-glow" aria-hidden="true"></div>
+      <div class="watch" id="watchTilt" aria-label="WispOS watch face showing live time">
+        <div class="watch-side"></div>
+        <div class="watch-crown"></div>
+        <div class="watch-button"></div>
+        <div class="watch-bezel">
+          <div class="watch-face">
+            <div class="face-top">
+              <span id="faceDate">FRI 25</span>
+              <span class="face-batt"><i></i><em id="faceBatt">92%</em></span>
+            </div>
+            <div class="face-time">
+              <span id="faceHours">09</span><span class="colon">:</span><span id="faceMins">41</span>
+            </div>
+            <div class="face-sub">Good morning</div>
+            <div class="face-apps">
+              <span class="dot dot-1"></span><span class="dot dot-2"></span><span class="dot dot-3"></span><span class="dot dot-4"></span>
+            </div>
+            <div class="face-hint">Swipe for apps →</div>
+          </div>
+          <div class="face-shine" aria-hidden="true"></div>
+        </div>
+        <div class="watch-strap strap-top"></div>
+        <div class="watch-strap strap-bottom"></div>
+      </div>
+      <div class="hero-caption">
+        <span class="live-dot"></span> Live — this watch is telling your time right now.
+      </div>
+    </div>
+  </section>
+
+  <!-- STRIP -->
+  <section class="strip">
+    <div class="strip-inner reveal">
+      <span>WispOS runs the apps you already use</span>
+      <div class="strip-logos">
+        <em>F-Droid</em><i>·</i><em>Aurora Store</em><i>·</i><em>Reminders</em><i>·</i><em>Music</em><i>·</i><em>Notes</em>
+      </div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section class="section why" id="why">
+    <div class="container narrow reveal">
+      <p class="eyebrow centered">Why WispOS</p>
+      <h2 class="h2">We removed<br/>almost everything.</h2>
+      <p class="body-large">Most smartwatches do too much. They listen when you didn’t ask. They track when you didn’t ask. They get warm in your pocket and tired by dinner.</p>
+      <p class="body">So we started over and kept only what matters on a wrist this small: the time, at a glance. Your controls, one swipe away. Your apps, where you expect them. Everything else — gone. What’s left is fast, calm, and yours.</p>
+    </div>
+    <div class="container trio">
+      <div class="trio-card reveal">
+        <div class="trio-icon" aria-hidden="true">◷</div>
+        <h3>Feels instant</h3>
+        <p>Three screens. Left, centre, right. No menus inside menus. If you can swipe, you already know how to use it.</p>
+      </div>
+      <div class="trio-card reveal">
+        <div class="trio-icon" aria-hidden="true">○</div>
+        <h3>Stays out of the way</h3>
+        <p>No assistant waiting for a wake word. No background syncing you never asked for. Just quiet software.</p>
+      </div>
+      <div class="trio-card reveal">
+        <div class="trio-icon" aria-hidden="true">▢</div>
+        <h3>Yours, truly</h3>
+        <p>Install what you like from the open Android world. No forced store, no lock-in. Free and open source, MIT licensed.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- EXPERIENCE -->
+  <section class="section experience" id="experience">
+    <div class="container">
+      <div class="exp-head reveal">
+        <p class="eyebrow">The experience</p>
+        <h2 class="h2">Three screens.<br/>That’s the whole manual.</h2>
+        <p class="body">Swipe left. Swipe right. You’ve learned WispOS. Tap below to look around.</p>
+      </div>
+
+      <div class="exp-tabs reveal" role="tablist" aria-label="WispOS screens">
+        <button class="exp-tab is-active" data-tab="face" role="tab">Watch face</button>
+        <button class="exp-tab" data-tab="controls" role="tab">Controls</button>
+        <button class="exp-tab" data-tab="library" role="tab">Library</button>
+      </div>
+
+      <div class="exp-stage reveal">
+        <div class="exp-copy">
+          <h3 id="expTitle">Glanceable, even in sunlight.</h3>
+          <p id="expText">Big numerals. Today’s date. Battery and how many apps are waiting. It ticks every second because a watch should feel alive.</p>
+          <ul class="exp-list" id="expList">
+            <li>Live clock, date and battery</li>
+            <li>Round-display tuned, crisp at arm’s length</li>
+            <li>Nothing blinking for your attention</li>
+          </ul>
+        </div>
+        <div class="mini-watch-wrap">
+          <div class="mini-watch">
+            <div class="mini-face" id="miniFace">
+              <!-- face view -->
+              <div class="mini-view view-face is-visible" data-view="face">
+                <div class="mv-top"><span id="miniDate">FRI 25 SEP</span><span>92%</span></div>
+                <div class="mv-clock"><span id="miniH">09</span>:<span id="miniM">41</span></div>
+                <div class="mv-sub" id="miniGreet">Good morning · <span id="miniCount">14</span> apps</div>
+                <div class="mv-dots"><span></span><span></span><span></span><span></span><span></span></div>
+              </div>
+              <!-- controls view -->
+              <div class="mini-view view-controls" data-view="controls">
+                <div class="mv-title">Controls</div>
+                <div class="mv-grid">
+                  <div class="mv-tile is-on"><i>◉</i><span>Wi-Fi</span></div>
+                  <div class="mv-tile is-on"><i>⬣</i><span>Bluetooth</span></div>
+                  <div class="mv-tile"><i>☼</i><span>Bright</span></div>
+                  <div class="mv-tile"><i>▮</i><span>Battery</span></div>
+                </div>
+                <div class="mv-foot">Tap to open system settings</div>
+              </div>
+              <!-- library view -->
+              <div class="mini-view view-library" data-view="library">
+                <div class="mv-title">Library</div>
+                <div class="mv-apps">
+                  <div class="mv-app"><b style="background:#34c759">R</b><span>Reminders</span></div>
+                  <div class="mv-app"><b style="background:#0a84ff">M</b><span>Music</span></div>
+                  <div class="mv-app"><b style="background:#ff9f0a">N</b><span>Notes</span></div>
+                  <div class="mv-app"><b style="background:#bf5af2">F</b><span>F-Droid</span></div>
+                  <div class="mv-app"><b style="background:#30b0c7">A</b><span>Aurora</span></div>
+                  <div class="mv-app"><b style="background:#ff453a">T</b><span>Timer</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <p class="mini-hint" id="miniHint">← &nbsp;You’re on the face. Swipe in your mind.&nbsp; →</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- APPS -->
+  <section class="section apps" id="apps">
+    <div class="container apps-grid">
+      <div class="apps-copy reveal">
+        <p class="eyebrow">Apps</p>
+        <h2 class="h2">Bring the apps<br/>you already like.</h2>
+        <p class="body">If it’s made for Android, it likely just runs. Install a reminder app from F-Droid in the morning, open it from your Library in the afternoon. It shows up with its own name and icon — and a tap opens it. Like it should.</p>
+        <div class="proof">
+          <div class="proof-check" aria-hidden="true">✓</div>
+          <div>
+            <strong>Proven, not promised.</strong>
+            <span>We installed a real reminder app from F-Droid on a standard Wear watch. It appeared in the Library and launched. That’s the test every release has to pass.</span>
+          </div>
+        </div>
+      </div>
+      <div class="apps-visual reveal" aria-hidden="true">
+        <div class="app-stack">
+          <div class="app-row"><b style="background:#1d1d1f">W</b><div><strong>WispOS Library</strong><span>14 apps · sorted A–Z</span></div><em>›</em></div>
+          <div class="app-row"><b style="background:#34c759">R</b><div><strong>reReminder</strong><span>Installed today · F-Droid</span></div><em class="open">Open</em></div>
+          <div class="app-row dim"><b style="background:#0a84ff">M</b><div><strong>Music</strong><span>On this watch</span></div><em>›</em></div>
+          <div class="app-row dim"><b style="background:#ff9f0a">N</b><div><strong>Notes</strong><span>On this watch</span></div><em>›</em></div>
+          <div class="app-row dim"><b style="background:#30b0c7">A</b><div><strong>Aurora Store</strong><span>Your catalogue</span></div><em>›</em></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CALM / DARK -->
+  <section class="calm" id="calm">
+    <div class="container">
+      <div class="calm-inner reveal">
+        <p class="eyebrow light">Battery &amp; calm</p>
+        <h2 class="h2 light">Designed to sip,<br/>not to sip your attention.</h2>
+        <p class="body light-dim">WispOS does nothing behind your back. Icons are loaded once and remembered. There are no wake-words, no background trackers phoning home. The result is simple: a watch that stays cool, stays quick, and makes it through your day — and then some.</p>
+        <div class="calm-stats">
+          <div class="stat"><strong>No listening</strong><span>No assistant hotword running day and night</span></div>
+          <div class="stat"><strong>No draining</strong><span>No fitness sync unless you open it</span></div>
+          <div class="stat"><strong>No waiting</strong><span>Opens fast, scrolls smoothly, rests deeply</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- DETAIL -->
+  <section class="section detail">
+    <div class="container detail-grid">
+      <div class="reveal">
+        <p class="eyebrow">Craft</p>
+        <h2 class="h2 small">Every pixel earns<br/>its place.</h2>
+        <p class="body">WispOS is drawn for small round displays — generous type, high contrast, forgiving touch targets. It respects the crown and the home button. It looks right at arm’s length and even better up close.</p>
+        <p class="fine">Built openly. MIT licensed. Shaped by a short, honest roadmap: set as the default home screen, polish motion to a steady glide, then measure real idle drain — and publish the numbers.</p>
+      </div>
+      <div class="detail-cards">
+        <div class="d-card reveal"><span>01</span><h4>Round-first layout</h4><p>Composed for the circle, not squeezed into it.</p></div>
+        <div class="d-card reveal"><span>02</span><h4>Readable at a glance</h4><p>Type sized for walking, running, and bad light.</p></div>
+        <div class="d-card reveal"><span>03</span><h4>Quiet by default</h4><p>Nothing moves unless you move it.</p></div>
+        <div class="d-card reveal"><span>04</span><h4>Open to inspect</h4><p>Source you can read, build, and improve.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- GET -->
+  <section class="section get" id="get">
+    <div class="container">
+      <div class="get-card reveal">
+        <p class="eyebrow centered">Preview 0.3 — free</p>
+        <h2 class="h2 centered">Try it on your watch<br/>in about five minutes.</h2>
+        <p class="body centered">You’ll need Android Studio and a Wear OS watch or emulator. If you can press Run, you can wear WispOS.</p>
+        <div class="steps">
+          <div class="step"><span>1</span><div><strong>Open the project</strong><p>Open <code>WATCHOSS-aosp/launcher</code> in Android Studio and let it sync.</p></div></div>
+          <div class="step"><span>2</span><div><strong>Press Run</strong><p>Choose your Wear OS Small Round device and press Run.</p></div></div>
+          <div class="step"><span>3</span><div><strong>Swipe up, tap WispOS</strong><p>Swipe left and right between controls, face and apps.</p></div></div>
+        </div>
+        <div class="get-actions">
+          <a class="btn btn-blue" href="https://github.com/nishantXnova/WispOS" target="_blank" rel="noopener">Get it on GitHub</a>
+          <a class="btn btn-ghost" href="https://github.com/nishantXnova/WispOS#install--run-5-min" target="_blank" rel="noopener">Read the 5-minute guide</a>
+        </div>
+        <p class="fine centered">10 of 13 milestones complete · Face, controls and real Library working today</p>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="footer">
+  <div class="container footer-inner">
+    <div class="f-brand">
+      <strong>WispOS</strong>
+      <span>A lean, smooth, compatible watch experience. MIT licensed.</span>
+    </div>
+    <div class="f-links">
+      <a href="https://github.com/nishantXnova/WispOS" target="_blank" rel="noopener">GitHub</a>
+      <a href="#why">Why</a>
+      <a href="#experience">Experience</a>
+      <a href="#get">Preview</a>
+    </div>
+  </div>
+  <div class="container footer-base">
+    <span>© 2026 WispOS contributors</span>
+    <span>Made calmly. No cookies, no tracking — this page is just HTML.</span>
+  </div>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>

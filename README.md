@@ -14,7 +14,11 @@ list, and launch from it. Proven on the Wear OS emulator with `reReminder`.
 
 ## Install & run (5 min)
 
-Prereqs: Android Studio (Ladybug+), JDK 17, a Wear OS 5+ emulator image.
+**Just want the APK?** Grab the latest from
+[Releases](https://github.com/nishantXnova/WispOS/releases), sideload it
+(`adb install`, Wear Installer, or Bugjaeger), set WispOS as the Home app, done.
+
+**Build it yourself.** Prereqs: Android Studio (Ladybug+), JDK 17, a Wear OS 5+ emulator image.
 
 1. Clone: `git clone https://github.com/nishantXnova/WispOS.git`
 2. Open `WATCHOSS-aosp/launcher` in Android Studio (New Window), wait for Gradle sync
